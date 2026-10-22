@@ -24,10 +24,51 @@
     const canvas = document.getElementById("spiel");
     const ctx = canvas.getContext("2d");
 
-    ctx.fillStyle = "lime";
-    ctx.font = "32px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("SPACE SHOOTER", canvas.width / 2, canvas.height / 2);
+    // Unser Raumschiff
+    const schiff = {
+      x: canvas.width / 2 - 20,
+      y: canvas.height - 60,
+      breite: 40,
+      hoehe: 30,
+      tempo: 5
+    };
+
+    // Welche Tasten sind gerade gedrückt?
+    const tasten = {};
+    document.addEventListener("keydown", (e) => { tasten[e.key] = true; });
+    document.addEventListener("keyup", (e) => { tasten[e.key] = false; });
+
+    function bewegen() {
+      if (tasten["ArrowLeft"]) schiff.x -= schiff.tempo;
+      if (tasten["ArrowRight"]) schiff.x += schiff.tempo;
+
+      // Nicht aus dem Spielfeld fliegen
+      if (schiff.x < 0) schiff.x = 0;
+      if (schiff.x > canvas.width - schiff.breite) schiff.x = canvas.width - schiff.breite;
+    }
+
+    function zeichnen() {
+      // Alles schwarz übermalen
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Raumschiff als Dreieck
+      ctx.fillStyle = "lime";
+      ctx.beginPath();
+      ctx.moveTo(schiff.x + schiff.breite / 2, schiff.y);
+      ctx.lineTo(schiff.x, schiff.y + schiff.hoehe);
+      ctx.lineTo(schiff.x + schiff.breite, schiff.y + schiff.hoehe);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function spielSchleife() {
+      bewegen();
+      zeichnen();
+      requestAnimationFrame(spielSchleife);
+    }
+
+    spielSchleife();
   </script>
 </body>
 </html>
