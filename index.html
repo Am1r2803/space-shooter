@@ -33,9 +33,18 @@
       tempo: 5
     };
 
+    // NEU: Liste mit allen Laserschüssen
+    let laser = [];
+    // NEU: Wartezeit bis zum nächsten Schuss
+    let nachladen = 0;
+
     // Welche Tasten sind gerade gedrückt?
     const tasten = {};
-    document.addEventListener("keydown", (e) => { tasten[e.key] = true; });
+    document.addEventListener("keydown", (e) => {
+      tasten[e.key] = true;
+      // NEU: Leertaste soll die Seite nicht scrollen
+      if (e.key === " ") e.preventDefault();
+    });
     document.addEventListener("keyup", (e) => { tasten[e.key] = false; });
 
     function bewegen() {
@@ -45,6 +54,27 @@
       // Nicht aus dem Spielfeld fliegen
       if (schiff.x < 0) schiff.x = 0;
       if (schiff.x > canvas.width - schiff.breite) schiff.x = canvas.width - schiff.breite;
+
+      // NEU: Schießen
+      if (nachladen > 0) nachladen--;
+      if (tasten[" "] && nachladen === 0) {
+        laser.push({
+          x: schiff.x + schiff.breite / 2 - 2,
+          y: schiff.y,
+          breite: 4,
+          hoehe: 12,
+          tempo: 8
+        });
+        nachladen = 15;
+      }
+
+      // NEU: Jeden Laser nach oben fliegen lassen
+      for (const l of laser) {
+        l.y -= l.tempo;
+      }
+
+      // NEU: Laser löschen, die oben aus dem Bild geflogen sind
+      laser = laser.filter((l) => l.y + l.hoehe > 0);
     }
 
     function zeichnen() {
@@ -60,6 +90,12 @@
       ctx.lineTo(schiff.x + schiff.breite, schiff.y + schiff.hoehe);
       ctx.closePath();
       ctx.fill();
+
+      // NEU: Alle Laser zeichnen
+      ctx.fillStyle = "yellow";
+      for (const l of laser) {
+        ctx.fillRect(l.x, l.y, l.breite, l.hoehe);
+      }
     }
 
     function spielSchleife() {
