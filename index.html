@@ -33,16 +33,21 @@
       tempo: 5
     };
 
-    // NEU: Liste mit allen Laserschüssen
+    // Liste mit allen Laserschüssen
     let laser = [];
-    // NEU: Wartezeit bis zum nächsten Schuss
+    // Wartezeit bis zum nächsten Schuss
     let nachladen = 0;
+
+    // NEU: Liste mit allen Gegnern
+    let gegner = [];
+    // NEU: Zeit bis zum nächsten Gegner
+    let gegnerTimer = 0;
 
     // Welche Tasten sind gerade gedrückt?
     const tasten = {};
     document.addEventListener("keydown", (e) => {
       tasten[e.key] = true;
-      // NEU: Leertaste soll die Seite nicht scrollen
+      // Leertaste soll die Seite nicht scrollen
       if (e.key === " ") e.preventDefault();
     });
     document.addEventListener("keyup", (e) => { tasten[e.key] = false; });
@@ -55,7 +60,7 @@
       if (schiff.x < 0) schiff.x = 0;
       if (schiff.x > canvas.width - schiff.breite) schiff.x = canvas.width - schiff.breite;
 
-      // NEU: Schießen
+      // Schießen
       if (nachladen > 0) nachladen--;
       if (tasten[" "] && nachladen === 0) {
         laser.push({
@@ -68,13 +73,45 @@
         nachladen = 15;
       }
 
-      // NEU: Jeden Laser nach oben fliegen lassen
+      // Jeden Laser nach oben fliegen lassen
       for (const l of laser) {
         l.y -= l.tempo;
       }
 
-      // NEU: Laser löschen, die oben aus dem Bild geflogen sind
+      // Laser löschen, die oben aus dem Bild geflogen sind
       laser = laser.filter((l) => l.y + l.hoehe > 0);
+
+      // NEU: Neue Gegner erscheinen lassen
+      gegnerTimer--;
+      if (gegnerTimer <= 0) {
+        gegner.push({
+          x: 6 + Math.random() * (canvas.width - 48),
+          y: -30,
+          breite: 36,
+          hoehe: 26,
+          tempo: 1 + Math.random() * 2
+        });
+        gegnerTimer = 60;
+      }
+
+      // NEU: Jeden Gegner nach unten fliegen lassen
+      for (const g of gegner) {
+        g.y += g.tempo;
+      }
+
+      // NEU: Gegner löschen, die unten aus dem Bild geflogen sind
+      gegner = gegner.filter((g) => g.y < canvas.height);
+    }
+
+    // NEU: Ein Alien zeichnen
+    function zeichneAlien(g) {
+      ctx.fillStyle = "magenta";
+      ctx.fillRect(g.x, g.y, g.breite, g.hoehe);          // Körper
+      ctx.fillRect(g.x - 6, g.y + 8, 6, 12);             // linker Arm
+      ctx.fillRect(g.x + g.breite, g.y + 8, 6, 12);      // rechter Arm
+      ctx.fillStyle = "black";
+      ctx.fillRect(g.x + 8, g.y + 8, 6, 6);              // linkes Auge
+      ctx.fillRect(g.x + g.breite - 14, g.y + 8, 6, 6);  // rechtes Auge
     }
 
     function zeichnen() {
@@ -91,10 +128,15 @@
       ctx.closePath();
       ctx.fill();
 
-      // NEU: Alle Laser zeichnen
+      // Alle Laser zeichnen
       ctx.fillStyle = "yellow";
       for (const l of laser) {
         ctx.fillRect(l.x, l.y, l.breite, l.hoehe);
+      }
+
+      // NEU: Alle Gegner zeichnen
+      for (const g of gegner) {
+        zeichneAlien(g);
       }
     }
 
