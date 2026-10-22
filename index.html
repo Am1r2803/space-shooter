@@ -1,1 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Space Shooter</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    canvas {
+      border: 2px solid lime;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="spiel" width="480" height="640"></canvas>
 
+  <script>
+    const canvas = document.getElementById("spiel");
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "lime";
+    ctx.font = "32px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("SPACE SHOOTER", canvas.width / 2, canvas.height / 2);
+  </script>
+</body>
+</html>
