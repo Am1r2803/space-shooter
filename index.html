@@ -38,10 +38,33 @@
     // Wartezeit bis zum nächsten Schuss
     let nachladen = 0;
 
-    // NEU: Liste mit allen Gegnern
+    // Liste mit allen Gegnern
     let gegner = [];
-    // NEU: Zeit bis zum nächsten Gegner
+    // Zeit bis zum nächsten Gegner
     let gegnerTimer = 0;
+
+    // NEU: Punktestand und ob das Spiel vorbei ist
+    let punkte = 0;
+    let spielVorbei = false;
+
+    // NEU: Prüft, ob sich zwei Rechtecke überlappen
+    function beruehren(a, b) {
+      return a.x < b.x + b.breite &&
+             a.x + a.breite > b.x &&
+             a.y < b.y + b.hoehe &&
+             a.y + a.hoehe > b.y;
+    }
+
+    // NEU: Alles auf Anfang zurücksetzen
+    function neustart() {
+      schiff.x = canvas.width / 2 - 20;
+      laser = [];
+      gegner = [];
+      nachladen = 0;
+      gegnerTimer = 0;
+      punkte = 0;
+      spielVorbei = false;
+    }
 
     // Welche Tasten sind gerade gedrückt?
     const tasten = {};
@@ -53,6 +76,12 @@
     document.addEventListener("keyup", (e) => { tasten[e.key] = false; });
 
     function bewegen() {
+      // NEU: Bei Game Over nur noch auf Enter warten
+      if (spielVorbei) {
+        if (tasten["Enter"]) neustart();
+        return;
+      }
+
       if (tasten["ArrowLeft"]) schiff.x -= schiff.tempo;
       if (tasten["ArrowRight"]) schiff.x += schiff.tempo;
 
@@ -81,7 +110,7 @@
       // Laser löschen, die oben aus dem Bild geflogen sind
       laser = laser.filter((l) => l.y + l.hoehe > 0);
 
-      // NEU: Neue Gegner erscheinen lassen
+      // Neue Gegner erscheinen lassen
       gegnerTimer--;
       if (gegnerTimer <= 0) {
         gegner.push({
@@ -94,16 +123,36 @@
         gegnerTimer = 60;
       }
 
-      // NEU: Jeden Gegner nach unten fliegen lassen
+      // Jeden Gegner nach unten fliegen lassen
       for (const g of gegner) {
         g.y += g.tempo;
       }
 
-      // NEU: Gegner löschen, die unten aus dem Bild geflogen sind
+      // Gegner löschen, die unten aus dem Bild geflogen sind
       gegner = gegner.filter((g) => g.y < canvas.height);
+
+      // NEU: Hat ein Laser ein Alien getroffen?
+      for (const l of laser) {
+        for (const g of gegner) {
+          if (!l.getroffen && !g.getroffen && beruehren(l, g)) {
+            l.getroffen = true;
+            g.getroffen = true;
+            punkte += 10;
+          }
+        }
+      }
+      laser = laser.filter((l) => !l.getroffen);
+      gegner = gegner.filter((g) => !g.getroffen);
+
+      // NEU: Hat ein Alien dein Schiff erwischt?
+      for (const g of gegner) {
+        if (beruehren(schiff, g)) {
+          spielVorbei = true;
+        }
+      }
     }
 
-    // NEU: Ein Alien zeichnen
+    // Ein Alien zeichnen
     function zeichneAlien(g) {
       ctx.fillStyle = "magenta";
       ctx.fillRect(g.x, g.y, g.breite, g.hoehe);          // Körper
@@ -134,9 +183,31 @@
         ctx.fillRect(l.x, l.y, l.breite, l.hoehe);
       }
 
-      // NEU: Alle Gegner zeichnen
+      // Alle Gegner zeichnen
       for (const g of gegner) {
         zeichneAlien(g);
+      }
+
+      // NEU: Punktestand oben links
+      ctx.fillStyle = "white";
+      ctx.font = "20px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("PUNKTE: " + punkte, 10, 30);
+
+      // NEU: Game-Over-Bildschirm
+      if (spielVorbei) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.textAlign = "center";
+        ctx.fillStyle = "red";
+        ctx.font = "48px monospace";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+
+        ctx.fillStyle = "white";
+        ctx.font = "20px monospace";
+        ctx.fillText("Punkte: " + punkte, canvas.width / 2, canvas.height / 2 + 20);
+        ctx.fillText("Enter = Neustart", canvas.width / 2, canvas.height / 2 + 55);
       }
     }
 
